@@ -48,7 +48,9 @@ def main():
     learning_rate = 0.01
     momentum = 0.9
     epochs = 10
-    device = torch.device("cpu")
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    cuda_args = kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
     data_transform = transforms.Compose([
         transforms.ToTensor(),
@@ -56,11 +58,11 @@ def main():
     ])
     cifar_training_data = datasets.CIFAR10("../data/CIFAR10", train=True, transform=data_transform, download=True)
     cifar_testing_data = datasets.CIFAR10("../data/CIFAR10", train=False, transform=data_transform)
-    train_loader = torch.utils.data.DataLoader(cifar_training_data, batch_size=training_batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(cifar_testing_data, batch_size=testing_batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(cifar_training_data, batch_size=training_batch_size, shuffle=True, **cuda_args)
+    test_loader = torch.utils.data.DataLoader(cifar_testing_data, batch_size=testing_batch_size, shuffle=True, **cuda_args)
 
     model = Net().to(device)
-    #model = MobileNetV2().to(device)
+    # model = MobileNetV2().to(device)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     for epoch in range(1, epochs + 1):

@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from models.mnist import Net
+from models.mnistnet import Net
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
