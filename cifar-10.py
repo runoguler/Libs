@@ -3,13 +3,16 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms
+
 from models.simplenet import Net
 from models.resnet import ResNet18
+from models.mobilenet import MobileNet
 from models.mobilenetv2 import MobileNetV2
+from models.lenet import LeNet
+from models.vgg import VGG
 
 
-def train(epoch, model, train_loader, optimizer, device):
-    log_interval = 20
+def train(epoch, model, train_loader, optimizer, device, log_interval):
     model.train()
     for batch_idx, (data, label) in enumerate(train_loader):
         data, labels = data.to(device), label.to(device)
@@ -51,6 +54,7 @@ def main():
     parser.add_argument('--momentum', type=float, default=0.5, metavar='M', help='SGD momentum (default: 0.5)')
     parser.add_argument('--seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
     parser.add_argument('--num-workers', type=int, default=1, metavar='N', help='number of workers for cuda')
+    parser.add_argument('--model-no', type=int, default=1, metavar='N', help='number of workers for cuda')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
     args = parser.parse_args()
 
@@ -67,12 +71,19 @@ def main():
     train_loader = torch.utils.data.DataLoader(cifar_training_data, batch_size=args.batch_size, shuffle=True, **cuda_args)
     test_loader = torch.utils.data.DataLoader(cifar_testing_data, batch_size=args.test_batch_size, shuffle=True, **cuda_args)
 
-    model = Net().to(device)
-    # model = MobileNetV2().to(device)
+    model_no = args.model_no
+    if model_no == 1: model = Net().to(device)
+    elif model_no == 2: model = ResNet18().to(device)
+    elif model_no == 3: model = MobileNet().to(device)
+    elif model_no == 4: model = MobileNetV2().to(device)
+    elif model_no == 5: model = LeNet().to(device)
+    elif model_no == 6: model = VGG().to(device)
+    else: model = Net().to(device)
+
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     for epoch in range(1, args.epochs + 1):
-        train(epoch, model, train_loader, optimizer, device)
+        train(epoch, model, train_loader, optimizer, device, args.log_interval)
         test(model, test_loader, device)
 
 
