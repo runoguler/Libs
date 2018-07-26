@@ -24,7 +24,7 @@ def display():
     plt.show()
 
 
-def train(train_loader, device):
+def train(train_loader, device, use_cuda):
     epochs = 10
 
     loss = torch.nn.BCELoss()
@@ -39,25 +39,34 @@ def train(train_loader, device):
     optim_gen = torch.optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
     optim_dis = torch.optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
+    if use_cuda:
+        Tensor = torch.cuda.FloatTensor
+    else:
+        Tensor = torch.FloatTensor
+
     for epoch in range(epochs):
         for (imgs, label) in train_loader:
             img, label = imgs.to(device), label.to(device)
 
-            ones = Variable(torch.FloatTensor(imgs.size(0), 1).fill_(1.0), requires_grad=False)
-            zeros = Variable(torch.FloatTensor(imgs.size(0), 1).fill_(0.0), requires_grad=False)
+            ones = Variable(Tensor(imgs.size(0), 1).fill_(1.0), requires_grad=False)
+            zeros = Variable(Tensor(imgs.size(0), 1).fill_(0.0), requires_grad=False)
 
             optim_gen.zero_grad()
 
-            z = torch.zeros((len(label), 10), dtype=torch.float)
+            real = Variable(imgs.type(Tensor))
+
+            z = np.zeros((len(label), 10), dtype=int)
             for i in range(len(label)):
                 z[i][label[i]] = 1
+            z = Variable(Tensor(z))
+
             fake = generator(z)
             loss_g = loss(discriminator(fake), ones)
             loss_g.backward()
             optim_gen.step()
 
             optim_dis.zero_grad()
-            real_loss = loss(discriminator(img), ones)
+            real_loss = loss(discriminator(real), ones)
             fake_loss = loss(discriminator(fake.detach()), zeros)
             loss_d = (real_loss + fake_loss) / 2
             loss_d.backward()
@@ -73,7 +82,6 @@ def main():
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=256, help='batch size for testing (default: 256)')
     parser.add_argument('--num-workers', type=int, default=1, help='number of workers for cuda')
-    parser.add_argument('--log-interval', type=int, default=10, help='how many batches to wait before logging training status')
     args = parser.parse_args()
 
     use_cuda = torch.cuda.is_available()
@@ -91,8 +99,8 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True, **cuda_args)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=args.test_batch_size, shuffle=True, **cuda_args)
 
-    # train(train_loader, device)
-    display()
+    train(train_loader, device, use_cuda)
+    # display()
 
 
 if __name__ == '__main__':

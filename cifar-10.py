@@ -76,8 +76,7 @@ def main():
     elif model_no == 2: model = ResNet18().to(device)
     elif model_no == 3: model = MobileNet().to(device)
     elif model_no == 4: model = MobileNetV2().to(device)
-    elif model_no == 5: model = LeNet().to(device)
-    elif model_no == 6: model = VGG().to(device)
+    elif model_no == 5: model = VGG('VGG16').to(device)
     else: model = Net().to(device)
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
