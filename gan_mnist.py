@@ -87,10 +87,10 @@ def main():
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=256, help='batch size for testing (default: 256)')
     parser.add_argument('--num-workers', type=int, default=1, help='number of workers for cuda')
-    parser.add_argument('--lr-g', type=int, default=lr_g, help='learning rate for the generator network')
-    parser.add_argument('--lr-d', type=int, default=lr_d, help='learning rate for the discriminator network')
+    parser.add_argument('--lr-g', type=float, default=lr_g, help='learning rate for the generator network')
+    parser.add_argument('--lr-d', type=float, default=lr_d, help='learning rate for the discriminator network')
     parser.add_argument('--epochs', type=int, default=epochs, help='epoch number to train (default: 10)')
-    parser.add_argument('--train', type=int, default=train_or_display, help='train or display (default: train(1))')
+    parser.add_argument('--train', type=int, default=train_or_display, help='train(1) or display(0) (default: train(1))')
     args = parser.parse_args()
 
     use_cuda = torch.cuda.is_available()
