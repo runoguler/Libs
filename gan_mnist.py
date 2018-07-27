@@ -13,14 +13,17 @@ from models.simple_gan import Generator, Discriminator
 
 
 def display(label):
-    generator = Generator(10)
+    gen_len = 100
+    generator = Generator(gen_len)
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
 
-    z = np.zeros((10, 10), dtype=int)
+    '''z = np.zeros((10, 10), dtype=int)
     for i in range(10):
         z[i][i] = 1
-    z = Variable(torch.FloatTensor(z))
+    z = Variable(torch.FloatTensor(z))'''
+
+    z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
 
     fake = generator(z)[label]
     plt.imshow(np.array(fake.detach())[0])
