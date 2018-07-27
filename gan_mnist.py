@@ -13,7 +13,7 @@ from models.simple_gan import Generator, Discriminator
 
 
 def display(label):
-    generator = Generator()
+    generator = Generator(10)
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
 
@@ -28,11 +28,13 @@ def display(label):
 
 
 def train(args, train_loader, device, Tensor):
+    gen_len = 100
+
     epochs = args.epochs
 
     loss = torch.nn.BCELoss()
 
-    generator = Generator()
+    generator = Generator(gen_len)
     discriminator = Discriminator()
 
     generator.to(device)
@@ -53,10 +55,12 @@ def train(args, train_loader, device, Tensor):
 
             real = Variable(img.type(Tensor))
 
-            z = np.zeros((len(label), 10), dtype=int)
+            '''z = np.zeros((len(label), gen_len), dtype=int)
             for i in range(len(label)):
                 z[i][label[i]] = 1
-            z = Variable(Tensor(z))
+            z = Variable(Tensor(z))'''
+
+            z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], gen_len))))
 
             fake = generator(z)
             loss_g = loss(discriminator(fake), ones)
@@ -117,7 +121,7 @@ def main():
     if args.train:
         train(args, train_loader, device, Tensor)
     else:
-        display()
+        display(args.display_label)
 
 
 if __name__ == '__main__':

@@ -4,11 +4,11 @@ img_shape = (1, 28, 28)
 
 
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, input_len):
         super(Generator, self).__init__()
 
         self.model = nn.Sequential(
-            nn.Linear(10, 256),
+            nn.Linear(input_len, 256),
             nn.BatchNorm1d(256, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(256, 512),
