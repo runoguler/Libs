@@ -12,20 +12,25 @@ from matplotlib import pyplot as plt
 from models.simple_gan import Generator, Discriminator
 
 
-def display():
+def display(Tensor):
     generator = Generator()
-    generator.eval()
     generator.load_state_dict(torch.load('./generator.pth'))
+    generator.eval()
 
-    z = torch.zeros((1, 10), dtype=torch.float)
-    z[0][3] = 1
-    fake = generator(z)[0]
-    plt.plot(np.array(fake.detach())[0])
+    z = np.zeros((10, 10), dtype=int)
+    for i in range(10):
+        z[i][i] = 1
+    z = Variable(Tensor(z))
+
+    label = 1
+
+    fake = generator(z)[label]
+    plt.imshow(np.array(fake.detach())[0])
     plt.show()
 
 
-def train(train_loader, device, use_cuda):
-    epochs = 10
+def train(train_loader, device, Tensor):
+    epochs = 1
 
     loss = torch.nn.BCELoss()
 
@@ -39,21 +44,16 @@ def train(train_loader, device, use_cuda):
     optim_gen = torch.optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
     optim_dis = torch.optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
-    if use_cuda:
-        Tensor = torch.cuda.FloatTensor
-    else:
-        Tensor = torch.FloatTensor
-
     for epoch in range(epochs):
-        for (imgs, label) in train_loader:
-            img, label = imgs.to(device), label.to(device)
+        for (imgs, labels) in train_loader:
+            img, label = imgs.to(device), labels.to(device)
 
             ones = Variable(Tensor(imgs.size(0), 1).fill_(1.0), requires_grad=False)
             zeros = Variable(Tensor(imgs.size(0), 1).fill_(0.0), requires_grad=False)
 
             optim_gen.zero_grad()
 
-            real = Variable(imgs.type(Tensor))
+            real = Variable(img.type(Tensor))
 
             z = np.zeros((len(label), 10), dtype=int)
             for i in range(len(label)):
@@ -74,7 +74,7 @@ def train(train_loader, device, use_cuda):
 
         print("Epoch: ", epoch, ", Loss(Gen): ", loss_g.item(), ", Loss(Dis): ", loss_d.item())
 
-    torch.save(generator.state_dict(), './generator.pth')
+    torch.save(generator.state_dict(), './generator2.pth')
 
 
 def main():
@@ -82,6 +82,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=256, help='batch size for testing (default: 256)')
     parser.add_argument('--num-workers', type=int, default=1, help='number of workers for cuda')
+    parser.add_argument('--train', type=int, default=0, help='train or display (default: train)')
     args = parser.parse_args()
 
     use_cuda = torch.cuda.is_available()
@@ -99,8 +100,16 @@ def main():
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True, **cuda_args)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=args.test_batch_size, shuffle=True, **cuda_args)
 
-    train(train_loader, device, use_cuda)
-    # display()
+    if use_cuda:
+        Tensor = torch.cuda.FloatTensor
+    else:
+        Tensor = torch.FloatTensor
+
+
+    if args.train:
+        train(train_loader, device, Tensor)
+    else:
+        display(Tensor)
 
 
 if __name__ == '__main__':
