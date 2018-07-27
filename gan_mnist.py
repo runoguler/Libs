@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from models.simple_gan import Generator, Discriminator
 
 
-def display(Tensor):
+def display(label):
     generator = Generator()
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
@@ -20,9 +20,7 @@ def display(Tensor):
     z = np.zeros((10, 10), dtype=int)
     for i in range(10):
         z[i][i] = 1
-    z = Variable(Tensor(z))
-
-    label = 1
+    z = Variable(torch.FloatTensor(z))
 
     fake = generator(z)[label]
     plt.imshow(np.array(fake.detach())[0])
@@ -82,6 +80,7 @@ def main():
     train_or_display = 1
     lr_g = 0.0002
     lr_d = 0.0002
+    digit_to_display = 0
 
     parser = argparse.ArgumentParser(description="Parameters for Training GAN on MNIST dataset")
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
@@ -91,6 +90,7 @@ def main():
     parser.add_argument('--lr-d', type=float, default=lr_d, help='learning rate for the discriminator network')
     parser.add_argument('--epochs', type=int, default=epochs, help='epoch number to train (default: 10)')
     parser.add_argument('--train', type=int, default=train_or_display, help='train(1) or display(0) (default: train(1))')
+    parser.add_argument('--display-label', type=int, default=digit_to_display, help='which digit to display')
     args = parser.parse_args()
 
     use_cuda = torch.cuda.is_available()
@@ -117,7 +117,7 @@ def main():
     if args.train:
         train(args, train_loader, device, Tensor)
     else:
-        display(Tensor)
+        display()
 
 
 if __name__ == '__main__':
