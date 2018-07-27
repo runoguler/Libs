@@ -29,8 +29,8 @@ def display(Tensor):
     plt.show()
 
 
-def train(train_loader, device, Tensor):
-    epochs = 1
+def train(args, train_loader, device, Tensor):
+    epochs = args.epochs
 
     loss = torch.nn.BCELoss()
 
@@ -41,8 +41,8 @@ def train(train_loader, device, Tensor):
     discriminator.to(device)
     loss.to(device)
 
-    optim_gen = torch.optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
-    optim_dis = torch.optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    optim_gen = torch.optim.Adam(generator.parameters(), lr=args.lr_g, betas=(0.5, 0.999))
+    optim_dis = torch.optim.Adam(discriminator.parameters(), lr=args.lr_d, betas=(0.5, 0.999))
 
     for epoch in range(epochs):
         for (imgs, labels) in train_loader:
@@ -74,15 +74,23 @@ def train(train_loader, device, Tensor):
 
         print("Epoch: ", epoch, ", Loss(Gen): ", loss_g.item(), ", Loss(Dis): ", loss_d.item())
 
-    torch.save(generator.state_dict(), './generator2.pth')
+    torch.save(generator.state_dict(), './generator.pth')
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Parameters for Training CIFAR-10")
+    epochs = 10
+    train_or_display = 1
+    lr_g = 0.0002
+    lr_d = 0.0002
+
+    parser = argparse.ArgumentParser(description="Parameters for Training GAN on MNIST dataset")
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=256, help='batch size for testing (default: 256)')
     parser.add_argument('--num-workers', type=int, default=1, help='number of workers for cuda')
-    parser.add_argument('--train', type=int, default=0, help='train or display (default: train)')
+    parser.add_argument('--lr-g', type=int, default=lr_g, help='learning rate for the generator network')
+    parser.add_argument('--lr-d', type=int, default=lr_d, help='learning rate for the discriminator network')
+    parser.add_argument('--epochs', type=int, default=epochs, help='epoch number to train (default: 10)')
+    parser.add_argument('--train', type=int, default=train_or_display, help='train or display (default: train(1))')
     args = parser.parse_args()
 
     use_cuda = torch.cuda.is_available()
@@ -107,7 +115,7 @@ def main():
 
 
     if args.train:
-        train(train_loader, device, Tensor)
+        train(args, train_loader, device, Tensor)
     else:
         display(Tensor)
 
