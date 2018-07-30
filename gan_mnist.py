@@ -10,7 +10,8 @@ matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 
 # from models.simple_gan import Generator, Discriminator
-from models.conv_gan import Generator, Discriminator
+# from models.conv_gan import Generator, Discriminator
+from models.simple_conv_gan import Generator, Discriminator
 
 
 def display(label):
