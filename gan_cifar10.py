@@ -16,7 +16,7 @@ from models.simple_conv_gan import Generator, Discriminator
 
 def display(label):
     gen_len = 10
-    generator = Generator(gen_len)
+    generator = Generator(gen_len, 3)
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
 
@@ -29,7 +29,7 @@ def display(label):
 
     fake = generator(z)[label]
 
-    discriminator = Discriminator()
+    discriminator = Discriminator(3)
     discriminator.load_state_dict(torch.load('./discriminator.pth'))
     validity = discriminator(fake)
     print(validity)
@@ -45,8 +45,8 @@ def train(args, train_loader, device, Tensor):
 
     loss = torch.nn.BCELoss()
 
-    generator = Generator(gen_len)
-    discriminator = Discriminator()
+    generator = Generator(gen_len, 3)
+    discriminator = Discriminator(3)
 
     generator.to(device)
     discriminator.to(device)
@@ -98,7 +98,7 @@ def main():
     lr_d = 0.0002
     digit_to_display = 0
 
-    parser = argparse.ArgumentParser(description="Parameters for Training GAN on MNIST dataset")
+    parser = argparse.ArgumentParser(description="Parameters for Training GAN on CIFAR10 dataset")
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=256, help='batch size for testing (default: 256)')
     parser.add_argument('--num-workers', type=int, default=1, help='number of workers for cuda')
@@ -118,8 +118,8 @@ def main():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
-    train_data = datasets.MNIST("../data/MNIST", train=True, transform=data_transform, download=True)
-    test_data = datasets.MNIST("../data/MNIST", train=False, transform=data_transform)
+    train_data = datasets.CIFAR10("../data/CIFAR10", train=True, transform=data_transform, download=True)
+    test_data = datasets.CIFAR10("../data/CIFAR10", train=False, transform=data_transform)
 
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True, **cuda_args)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=args.test_batch_size, shuffle=True, **cuda_args)

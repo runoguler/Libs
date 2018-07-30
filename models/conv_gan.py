@@ -4,7 +4,7 @@ img_shape = (1, 28, 28)
 
 
 class Generator(nn.Module):
-    def __init__(self, input_len):
+    def __init__(self, input_len, channels=1):
         super(Generator, self).__init__()
 
         self.fcl = nn.Linear(input_len, 128*7*7)
@@ -19,7 +19,7 @@ class Generator(nn.Module):
             nn.Conv2d(128, 64, 3, stride=1, padding=1),
             nn.BatchNorm2d(64, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(64, 1, 3, stride=1, padding=1),
+            nn.Conv2d(64, channels, 3, stride=1, padding=1),
             nn.Tanh()
         )
 
@@ -31,11 +31,11 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, channels=1):
         super(Discriminator, self).__init__()
 
         self.model = nn.Sequential(
-            nn.Conv2d(1, 16, 3, 2, 1),
+            nn.Conv2d(channels, 16, 3, 2, 1),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout2d(0.25),
 
