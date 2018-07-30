@@ -9,21 +9,22 @@ import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib import pyplot as plt
 
-from models.simple_gan import Generator, Discriminator
+# from models.simple_gan import Generator, Discriminator
+from models.conv_gan import Generator, Discriminator
 
 
 def display(label):
-    gen_len = 100
+    gen_len = 10
     generator = Generator(gen_len)
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
 
-    '''z = np.zeros((10, 10), dtype=int)
+    z = np.zeros((10, 10), dtype=int)
     for i in range(10):
         z[i][i] = 1
-    z = Variable(torch.FloatTensor(z))'''
+    z = Variable(torch.FloatTensor(z))
 
-    z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
+    # z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
 
     fake = generator(z)[label]
     plt.imshow(np.array(fake.detach())[0])
@@ -31,7 +32,7 @@ def display(label):
 
 
 def train(args, train_loader, device, Tensor):
-    gen_len = 100
+    gen_len = 10
 
     epochs = args.epochs
 
@@ -58,12 +59,12 @@ def train(args, train_loader, device, Tensor):
 
             real = Variable(img.type(Tensor))
 
-            '''z = np.zeros((len(label), gen_len), dtype=int)
+            z = np.zeros((len(label), gen_len), dtype=int)
             for i in range(len(label)):
                 z[i][label[i]] = 1
-            z = Variable(Tensor(z))'''
+            z = Variable(Tensor(z))
 
-            z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], gen_len))))
+            # z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], gen_len))))
 
             fake = generator(z)
             loss_g = loss(discriminator(fake), ones)
