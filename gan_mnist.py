@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 from models.aux_gan import Generator, Discriminator
 
 
-def display(label, Tensor, LongTensor):
+def display(label):
     gen_len = 100
     generator = Generator(gen_len)
     generator.load_state_dict(torch.load('./generator.pth'))
@@ -24,8 +24,8 @@ def display(label, Tensor, LongTensor):
     x = []
     for i in range(10):
         x.append(i)
-    labels = Variable(LongTensor(np.array(x)))
-    z = Variable(Tensor(np.random.normal(0, 1, (10, gen_len))))
+    labels = Variable(torch.LongTensor(np.array(x)))
+    z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
 
     fake = generator(z, labels)
 
@@ -137,7 +137,7 @@ def main():
     if args.train:
         train(args, data_loader, device, Tensor, LongTensor)
     else:
-        display(args.display_label, Tensor, LongTensor)
+        display(args.display_label)
 
 
 if __name__ == '__main__':
