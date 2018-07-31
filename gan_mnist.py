@@ -15,22 +15,27 @@ from matplotlib import pyplot as plt
 from models.aux_gan import Generator, Discriminator
 
 
-def display(label):
+def display(label, Tensor, LongTensor):
     gen_len = 100
     generator = Generator(gen_len)
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
 
-    z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
+    x = []
+    for i in range(10):
+        x.append(i)
+    labels = Variable(LongTensor(np.array(x)))
+    z = Variable(Tensor(np.random.normal(0, 1, (10, gen_len))))
 
-    fake = generator(z)
+    fake = generator(z, labels)
 
     discriminator = Discriminator()
     discriminator.load_state_dict(torch.load('./discriminator.pth'))
-    validity = discriminator(fake)
+    fake_labels, validity = discriminator(fake)
     print(validity)
+    print(fake_labels)
 
-    plt.imshow(np.array(fake.detach())[0])
+    plt.imshow(np.array(fake.detach())[label])
     plt.show()
 
 
@@ -132,7 +137,7 @@ def main():
     if args.train:
         train(args, data_loader, device, Tensor, LongTensor)
     else:
-        display(args.display_label)
+        display(args.display_label, Tensor, LongTensor)
 
 
 if __name__ == '__main__':
