@@ -60,7 +60,7 @@ def train(args, train_loader, device, Tensor, LongTensor):
             ones = Variable(Tensor(batch_len, 1).fill_(1.0), requires_grad=False)
             zeros = Variable(Tensor(batch_len, 1).fill_(0.0), requires_grad=False)
 
-            images, labels = Variable(images.to(device).type(Tensor)), Variable(labels.to(device).type(Tensor))
+            images, labels = Variable(images.to(device).type(Tensor)), Variable(labels.to(device).type(LongTensor))
 
             rd_labels = Variable(LongTensor(np.random.randint(0, 10, batch_len)))
             z = Variable(Tensor(np.random.normal(0, 1, (batch_len, gen_len))))

@@ -50,8 +50,8 @@ class Discriminator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *block(img_shape[0], 16, bn=False)
-            *block(16, 32)
+            *block(img_shape[0], 16, bn=False),
+            *block(16, 32),
             *block(32, 64)
         )
 
