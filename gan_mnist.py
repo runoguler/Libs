@@ -39,7 +39,7 @@ def display(label):
     plt.show()
 
 
-def train(args, train_loader, device, Tensor, LongTensor, resume=False):
+def train(args, train_loader, device, Tensor, LongTensor):
     gen_len = 100
 
     epochs = args.epochs
@@ -49,7 +49,7 @@ def train(args, train_loader, device, Tensor, LongTensor, resume=False):
 
     generator = Generator(gen_len)
     discriminator = Discriminator()
-    if resume:
+    if args.resume:
         generator.load_state_dict(torch.load('./generator.pth', map_location='cpu'))
         discriminator.load_state_dict(torch.load('./discriminator.pth'))
 
@@ -105,6 +105,7 @@ def main():
     lr_g = 0.0002
     lr_d = 0.0002
     digit_to_display = 0
+    resume = 0
 
     parser = argparse.ArgumentParser(description="Parameters for Training GAN on MNIST dataset")
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
@@ -114,6 +115,7 @@ def main():
     parser.add_argument('--epochs', type=int, default=epochs, help='epoch number to train (default: 10)')
     parser.add_argument('--train', type=int, default=train_or_display, help='train(1) or display(0) (default: train(1))')
     parser.add_argument('--display-label', type=int, default=digit_to_display, help='which digit to display')
+    parser.add_argument('--resume', type=int, default=resume, help='continue training if 1 (default: 0)')
     args = parser.parse_args()
 
     use_cuda = torch.cuda.is_available()
