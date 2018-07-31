@@ -11,23 +11,19 @@ from matplotlib import pyplot as plt
 
 # from models.simple_gan import Generator, Discriminator
 # from models.conv_gan import Generator, Discriminator
-from models.simple_conv_gan import Generator, Discriminator
+# from models.simple_conv_gan import Generator, Discriminator
+from models.aux_gan import Generator, Discriminator
 
 
 def display(label):
-    gen_len = 10
+    gen_len = 100
     generator = Generator(gen_len)
     generator.load_state_dict(torch.load('./generator.pth'))
     generator.eval()
 
-    z = np.zeros((10, 10), dtype=int)
-    for i in range(10):
-        z[i][i] = 1
-    z = Variable(torch.FloatTensor(z))
+    z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
 
-    # z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
-
-    fake = generator(z)[label]
+    fake = generator(z)
 
     discriminator = Discriminator()
     discriminator.load_state_dict(torch.load('./discriminator.pth'))
@@ -38,54 +34,58 @@ def display(label):
     plt.show()
 
 
-def train(args, train_loader, device, Tensor):
-    gen_len = 10
+def train(args, train_loader, device, Tensor, LongTensor):
+    gen_len = 100
 
     epochs = args.epochs
 
-    loss = torch.nn.BCELoss()
+    validity_loss = torch.nn.BCELoss()
+    result_loss = torch.nn.CrossEntropyLoss()
 
     generator = Generator(gen_len)
     discriminator = Discriminator()
 
     generator.to(device)
     discriminator.to(device)
-    loss.to(device)
+    validity_loss.to(device)
+    result_loss.to(device)
 
     optim_gen = torch.optim.Adam(generator.parameters(), lr=args.lr_g, betas=(0.5, 0.999))
     optim_dis = torch.optim.Adam(discriminator.parameters(), lr=args.lr_d, betas=(0.5, 0.999))
 
     for epoch in range(epochs):
-        for (imgs, labels) in train_loader:
-            img, label = imgs.to(device), labels.to(device)
+        for (images, labels) in train_loader:
+            batch_len = images.size(0)
 
-            ones = Variable(Tensor(imgs.size(0), 1).fill_(1.0), requires_grad=False)
-            zeros = Variable(Tensor(imgs.size(0), 1).fill_(0.0), requires_grad=False)
+            ones = Variable(Tensor(batch_len, 1).fill_(1.0), requires_grad=False)
+            zeros = Variable(Tensor(batch_len, 1).fill_(0.0), requires_grad=False)
+
+            images, labels = Variable(images.to(device).type(Tensor)), Variable(labels.to(device).type(Tensor))
+
+            rd_labels = Variable(LongTensor(np.random.randint(0, 10, batch_len)))
+            z = Variable(Tensor(np.random.normal(0, 1, (batch_len, gen_len))))
 
             optim_gen.zero_grad()
-
-            real = Variable(img.type(Tensor))
-
-            z = np.zeros((len(label), gen_len), dtype=int)
-            for i in range(len(label)):
-                z[i][label[i]] = 1
-            z = Variable(Tensor(z))
-
-            # z = Variable(Tensor(np.random.normal(0, 1, (imgs.shape[0], gen_len))))
-
-            fake = generator(z)
-            loss_g = loss(discriminator(fake), ones)
+            fake = generator(z, rd_labels)
+            pred_label, validity = discriminator(fake)
+            loss_g = validity_loss(validity, ones)
             loss_g.backward()
             optim_gen.step()
 
             optim_dis.zero_grad()
-            real_loss = loss(discriminator(real), ones)
-            fake_loss = loss(discriminator(fake.detach()), zeros)
+            real_labels, real_validity = discriminator(images)
+            fake_labels, fake_validity = discriminator(fake.detach())
+            real_loss = (validity_loss(real_validity, ones) + result_loss(real_labels, labels)) / 2
+            fake_loss = (validity_loss(fake_validity, zeros) + result_loss(fake_labels, labels)) / 2
             loss_d = (real_loss + fake_loss) / 2
             loss_d.backward()
             optim_dis.step()
 
-        print("Epoch: ", epoch, ", Loss(Gen): ", loss_g.item(), ", Loss(Dis): ", loss_d.item())
+            pred = np.concatenate([real_validity.data.cpu().numpy(), fake_validity.data.cpu().numpy()], axis=0)
+            gt = np.concatenate([labels.data.cpu().numpy(), rd_labels.data.cpu().numpy()], axis=0)
+            d_acc = np.mean(np.argmax(pred, axis=1) == gt)
+
+        print("Epoch: ", epoch, ", Loss(Gen): ", loss_g.item(), ", Loss(Dis): ", loss_d.item(), ", Acc(Dis): ", d_acc)
 
     torch.save(generator.state_dict(), './generator.pth')
     torch.save(discriminator.state_dict(), './discriminator.pth')
@@ -100,7 +100,6 @@ def main():
 
     parser = argparse.ArgumentParser(description="Parameters for Training GAN on MNIST dataset")
     parser.add_argument('--batch-size', type=int, default=64, help='batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=256, help='batch size for testing (default: 256)')
     parser.add_argument('--num-workers', type=int, default=1, help='number of workers for cuda')
     parser.add_argument('--lr-g', type=float, default=lr_g, help='learning rate for the generator network')
     parser.add_argument('--lr-d', type=float, default=lr_d, help='learning rate for the discriminator network')
@@ -118,20 +117,20 @@ def main():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
-    train_data = datasets.MNIST("../data/MNIST", train=True, transform=data_transform, download=True)
-    test_data = datasets.MNIST("../data/MNIST", train=False, transform=data_transform)
+    training_data = datasets.MNIST("../data/MNIST", train=True, transform=data_transform, download=True)
 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True, **cuda_args)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=args.test_batch_size, shuffle=True, **cuda_args)
+    data_loader = torch.utils.data.DataLoader(training_data, batch_size=args.batch_size, shuffle=True, **cuda_args)
 
     if use_cuda:
         Tensor = torch.cuda.FloatTensor
+        LongTensor = torch.cuda.LongTensor
     else:
         Tensor = torch.FloatTensor
+        LongTensor = torch.LongTensor
 
 
     if args.train:
-        train(args, train_loader, device, Tensor)
+        train(args, data_loader, device, Tensor, LongTensor)
     else:
         display(args.display_label)
 
