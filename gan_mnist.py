@@ -18,7 +18,7 @@ from models.aux_gan import Generator, Discriminator
 def display(label):
     gen_len = 100
     generator = Generator(gen_len)
-    generator.load_state_dict(torch.load('./generator.pth'))
+    generator.load_state_dict(torch.load('./generator.pth', map_location='cpu'))
     generator.eval()
 
     x = []
@@ -27,19 +27,19 @@ def display(label):
     labels = Variable(torch.LongTensor(np.array(x)))
     z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
 
-    fake = generator(z, labels)
+    fake = generator(z, labels)[label]
 
-    discriminator = Discriminator()
-    discriminator.load_state_dict(torch.load('./discriminator.pth'))
-    fake_labels, validity = discriminator(fake)
-    print(validity)
-    print(fake_labels)
+    # discriminator = Discriminator()
+    # discriminator.load_state_dict(torch.load('./discriminator.pth'))
+    # fake_labels, validity = discriminator(fake)
+    # print(validity)
+    # print(fake_labels)
 
-    plt.imshow(np.array(fake.detach())[label])
+    plt.imshow(np.array(fake.detach())[0])
     plt.show()
 
 
-def train(args, train_loader, device, Tensor, LongTensor):
+def train(args, train_loader, device, Tensor, LongTensor, resume=False):
     gen_len = 100
 
     epochs = args.epochs
@@ -49,6 +49,9 @@ def train(args, train_loader, device, Tensor, LongTensor):
 
     generator = Generator(gen_len)
     discriminator = Discriminator()
+    if resume:
+        generator.load_state_dict(torch.load('./generator.pth', map_location='cpu'))
+        discriminator.load_state_dict(torch.load('./discriminator.pth'))
 
     generator.to(device)
     discriminator.to(device)
@@ -98,7 +101,7 @@ def train(args, train_loader, device, Tensor, LongTensor):
 
 def main():
     epochs = 10
-    train_or_display = 1
+    train_or_display = 0
     lr_g = 0.0002
     lr_d = 0.0002
     digit_to_display = 0
