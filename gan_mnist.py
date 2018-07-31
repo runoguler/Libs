@@ -27,15 +27,16 @@ def display(label):
     labels = Variable(torch.LongTensor(np.array(x)))
     z = Variable(torch.FloatTensor(np.random.normal(0, 1, (10, gen_len))))
 
-    fake = generator(z, labels)[label]
+    fake = generator(z, labels)
 
-    # discriminator = Discriminator()
-    # discriminator.load_state_dict(torch.load('./discriminator.pth'))
-    # fake_labels, validity = discriminator(fake)
-    # print(validity)
-    # print(fake_labels)
+    discriminator = Discriminator()
+    discriminator.load_state_dict(torch.load('./discriminator.pth', map_location='cpu'))
+    discriminator.eval()
+    fake_labels, validity = discriminator(fake)
+    print(validity)
+    print(fake_labels)
 
-    plt.imshow(np.array(fake.detach())[0])
+    plt.imshow(np.array(fake[label].detach())[0])
     plt.show()
 
 
@@ -51,7 +52,10 @@ def train(args, train_loader, device, Tensor, LongTensor):
     discriminator = Discriminator()
     if args.resume:
         generator.load_state_dict(torch.load('./generator.pth', map_location='cpu'))
-        discriminator.load_state_dict(torch.load('./discriminator.pth'))
+        discriminator.load_state_dict(torch.load('./discriminator.pth', map_location='cpu'))
+
+    generator.train()
+    discriminator.train()
 
     generator.to(device)
     discriminator.to(device)
@@ -76,7 +80,7 @@ def train(args, train_loader, device, Tensor, LongTensor):
             optim_gen.zero_grad()
             fake = generator(z, rd_labels)
             pred_label, validity = discriminator(fake)
-            loss_g = validity_loss(validity, ones)
+            loss_g = (validity_loss(validity, ones) + result_loss(pred_label, rd_labels)) / 2
             loss_g.backward()
             optim_gen.step()
 
