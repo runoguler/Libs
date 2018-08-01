@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 
 
-img_shape = (1, 28, 28)
+# img_shape = (1, 28, 28) # MNIST dataset
+img_shape = (3, 32, 32) # CIFAR-10 dataset
 
 
 class Generator(nn.Module):
